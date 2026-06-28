@@ -33,6 +33,31 @@ body { background:#0d1117; font-family:Arial,sans-serif; color:#fff; min-height:
 .dash-btn { background:rgba(255,255,255,.18); color:#fff; border:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
 .dash-btn:hover { opacity:.85; }
 
+.demo-panel {
+  margin: 18px 24px 0;
+  background:#161b22;
+  border:1px solid #2d3748;
+  border-radius:12px;
+  padding:16px 18px;
+}
+.demo-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.demo-title { font-size:15px; font-weight:700; color:#6DB3F2; }
+.demo-sub { font-size:12px; color:#9CA3AF; margin-top:2px; }
+.demo-frame {
+  width:100%;
+  min-height:760px;
+  border:1px solid #2d3748;
+  border-radius:10px;
+  background:#0d1117;
+}
+
 .stats-row { display:flex; gap:12px; flex-wrap:wrap; padding:18px 24px; }
 .stat-box { background:#161b22; border:1px solid #2d3748; border-radius:10px; padding:14px 20px; min-width:130px; flex:1; }
 .stat-num { font-size:28px; font-weight:700; color:#6DB3F2; }
@@ -81,6 +106,17 @@ tr:hover td { background:#161b22; }
       <button class="dash-btn" onclick="loadData()">↻ Actualiser</button>
       <button class="dash-btn" onclick="exportCSV()">⬇ Exporter CSV</button>
     </div>
+  </div>
+
+  <div class="demo-panel">
+    <div class="demo-header">
+      <div>
+        <div class="demo-title">Mode démo — aperçu de l’application</div>
+        <div class="demo-sub">La démo affiche toutes les réponses pour présenter le jeu aux participants.</div>
+      </div>
+      <button class="dash-btn" onclick="openDemo()">▶ Ouvrir la démo</button>
+    </div>
+    <iframe class="demo-frame" src="index.html?demo=1" title="Démo BPP Error Room"></iframe>
   </div>
 
   <div class="stats-row" id="statsRow"></div>
@@ -133,6 +169,10 @@ function login() {
   document.getElementById('loginWrap').style.display = 'none';
   document.getElementById('dash').classList.add('active');
   loadData();
+}
+
+function openDemo() {
+  window.open('index.html?demo=1', '_blank', 'noopener,noreferrer');
 }
 
 function loadData() {

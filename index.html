@@ -166,16 +166,29 @@ body { background:#0d1117; font-family:Arial,sans-serif; color:#fff; }
 @keyframes rip { from{opacity:1;transform:translate(-50%,-50%) scale(.4)} to{opacity:0;transform:translate(-50%,-50%) scale(2.6)} }
 
 .popup {
-  position:absolute; background:#1a2332; border:1px solid #374151;
-  border-radius:8px; padding:11px 13px; max-width:240px; min-width:180px;
-  pointer-events:none; z-index:30; box-shadow:0 4px 20px rgba(0,0,0,.6);
+  position:absolute; background:rgba(17,24,39,.78); border:1px solid rgba(109,179,242,.18);
+  border-radius:8px; padding:8px 10px; max-width:220px; min-width:150px;
+  pointer-events:none; z-index:30; box-shadow:0 4px 14px rgba(0,0,0,.28);
+  animation:fadein .18s ease; backdrop-filter:blur(6px);
+}
+.completion-popup {
+  position:absolute; left:50%; bottom:16px; transform:translateX(-50%);
+  background:rgba(16,185,129,.95); color:#fff; border-radius:999px;
+  padding:8px 8px 8px 16px; font-size:12px; font-weight:700; z-index:40;
+  box-shadow:0 6px 24px rgba(0,0,0,.28); white-space:nowrap;
   animation:fadein .2s ease;
+  display:flex; align-items:center; gap:10px;
+}
+.completion-popup-next {
+  background:rgba(255,255,255,.95); color:#10b981; border:none;
+  border-radius:999px; padding:6px 14px; font-size:12px; font-weight:700;
+  cursor:pointer; white-space:nowrap;
 }
 @keyframes fadein { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
-.popup-num { font-size:10px; color:#6DB3F2; font-weight:700; margin-bottom:3px; }
-.popup-title { font-size:12px; font-weight:700; margin-bottom:4px; }
-.popup-desc { font-size:10px; color:#9CA3AF; line-height:1.5; margin-bottom:5px; }
-.popup-ref { font-size:9px; color:#6DB3F2; }
+.popup-num { font-size:9px; color:#6DB3F2; font-weight:700; margin-bottom:2px; }
+.popup-title { font-size:11px; font-weight:700; margin-bottom:3px; }
+.popup-desc { font-size:9px; color:#cbd5e1; line-height:1.4; margin-bottom:4px; }
+.popup-ref { font-size:8px; color:#6DB3F2; }
 
 .toast {
   position:fixed; top:64px; right:14px;
@@ -183,6 +196,11 @@ body { background:#0d1117; font-family:Arial,sans-serif; color:#fff; }
   color:#fca5a5; padding:8px 14px; border-radius:8px;
   font-size:12px; z-index:200;
   animation:fadein .2s ease, fadeout .3s ease 1.2s forwards; pointer-events:none;
+}
+.toast.success {
+  border-color:#10b981;
+  color:#bbf7d0;
+  background:rgba(17,24,39,.95);
 }
 @keyframes fadeout { to{opacity:0} }
 
@@ -318,7 +336,7 @@ body { background:#0d1117; font-family:Arial,sans-serif; color:#fff; }
     <div class="welcome-title">Comment jouer</div>
     <div class="explain-box">
       <p><b>Principe :</b> chaque scène montre une situation de préparation en UPCC. Cliquez directement sur l'image partout où vous identifiez une non-conformité BPP.</p>
-      <p><b>Minuteur :</b> vous avez <b>2 minutes par scène</b>. Au-delà, la scène suivante démarre automatiquement.</p>
+      <p><b>Minuteur :</b> vous avez <b>10 secondes par erreur</b>. Une scène avec 7 erreurs dure donc 70 secondes, puis la scène suivante démarre automatiquement.</p>
       <p><b>Feedback :</b> chaque clic correct affiche l'explication BPP associée, qui reste visible dans le journal en bas d'écran.</p>
       <p><b>Vidéos :</b> à la fin de chaque scène, une vidéo de formation BPP en lien avec la thématique vous sera proposée.</p>
       <p><b>Débriefing :</b> les corrections détaillées seront discutées collectivement après le jeu.</p>
@@ -351,7 +369,6 @@ body { background:#0d1117; font-family:Arial,sans-serif; color:#fff; }
     <div class="error-log" id="errorLog"></div>
   </div>
   <div class="bottom-bar">
-    <button class="btn btn-reveal" onclick="revealAll()">Révéler tout</button>
     <button class="btn btn-reset" onclick="resetScene()">↺ Recommencer</button>
     <div class="prog"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
     <button class="btn btn-next" id="btnNext" onclick="goNext()">Scène suivante →</button>
@@ -391,7 +408,6 @@ body { background:#0d1117; font-family:Arial,sans-serif; color:#fff; }
     <div class="submit-status" id="submitStatus"></div>
     <div class="final-grid" id="finalGrid"></div>
     <div class="final-actions">
-      <button class="btn-copy" onclick="copyResults()">📋 Copier mes résultats</button>
       <button class="btn-restart" onclick="restartGame()">↺ Recommencer</button>
     </div>
   </div>
@@ -567,9 +583,12 @@ let currentScene = 0;
 let found = new Set();
 let sceneScores = []; // {found, total, title, color, foundLabels, missedLabels}
 let timerInterval = null;
-let timeLeft = 120;
+let timeLeft = 0;
 let revealTimer = null;
-const HIT_TOLERANCE = 1.3; // marge de tolérance pour clics mobiles (user-friendly)
+let popupTimer = null;
+const HIT_TOLERANCE = 1.08; // marge de tolérance pour clics mobiles (user-friendly)
+const SECONDS_PER_ERROR = 10;
+const DEMO_MODE = new URLSearchParams(window.location.search).get('demo') === '1';
 
 // ── WELCOME ───────────────────────────────────────────────────────────
 (function initWelcome() {
@@ -595,7 +614,8 @@ function startGame() {
 // ── TIMER ─────────────────────────────────────────────────────────────
 function startTimer() {
   clearInterval(timerInterval);
-  timeLeft = 120;
+  const scene = SCENES[currentScene];
+  timeLeft = scene.errors.length * SECONDS_PER_ERROR;
   updateTimerDisplay();
   timerInterval = setInterval(() => {
     timeLeft--;
@@ -617,7 +637,7 @@ function updateTimerDisplay() {
   const s = timeLeft % 60;
   const pill = document.getElementById('timerPill');
   pill.textContent = '⏱ ' + m + ':' + (s < 10 ? '0' : '') + s;
-  pill.classList.toggle('low', timeLeft <= 20);
+  pill.classList.toggle('low', timeLeft <= 10);
 }
 
 // ── SCENE LOADER ──────────────────────────────────────────────────────
@@ -641,13 +661,19 @@ function loadScene(idx) {
   });
 
   const wrap = document.getElementById('wrap');
-  wrap.querySelectorAll('.found-zone,.ripple,.popup').forEach(e => e.remove());
+  wrap.querySelectorAll('.found-zone,.ripple,.popup,.completion-popup').forEach(e => e.remove());
   document.getElementById('errorLog').innerHTML = '';
 
   const img = document.getElementById('sceneImg');
   img.src = s.img;
-  img.onload = () => { wrap.onclick = handleClick; };
-  if (img.complete && img.naturalWidth > 0) wrap.onclick = handleClick;
+  img.onload = () => {
+    wrap.onclick = handleClick;
+    if (DEMO_MODE) revealSceneAnswers();
+  };
+  if (img.complete && img.naturalWidth > 0) {
+    wrap.onclick = handleClick;
+    if (DEMO_MODE) revealSceneAnswers();
+  }
 
   startTimer();
 }
@@ -665,9 +691,14 @@ function handleClick(e) {
   const wy = e.clientY - wr.top;
 
   let hit = null;
+  let bestDistance = Infinity;
   for (const err of scene.errors) {
     const dx = px - err.cx, dy = py - err.cy;
-    if (Math.sqrt(dx*dx + dy*dy) <= err.r * HIT_TOLERANCE) { hit = err; break; }
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist <= err.r * HIT_TOLERANCE && dist < bestDistance) {
+      bestDistance = dist;
+      hit = err;
+    }
   }
 
   addRipple(wx, wy, hit !== null);
@@ -718,7 +749,6 @@ function addToLog(err) {
     '<div class="log-desc">' + (err.desc || '') + '</div>' +
     '<div class="log-ref">📚 ' + (err.ref || '') + '</div>';
   log.appendChild(item);
-  item.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function showPopup(err, wx, wy, wrapW) {
@@ -736,9 +766,13 @@ function showPopup(err, wx, wy, wrapW) {
   p.style.left = left + 'px';
   p.style.top  = Math.max(4, wy - 10) + 'px';
   wrap.appendChild(p);
+  clearTimeout(popupTimer);
+  popupTimer = setTimeout(clearPopup, 1400);
 }
 
 function clearPopup() {
+  clearTimeout(popupTimer);
+  popupTimer = null;
   const p = document.getElementById('popup');
   if (p) p.remove();
 }
@@ -752,27 +786,45 @@ function showToast() {
   setTimeout(() => t.remove(), 1500);
 }
 
+function showCompletionPopup() {
+  clearPopup();
+  const wrap = document.getElementById('wrap');
+  const popup = document.createElement('div');
+  popup.className = 'completion-popup';
+  popup.innerHTML =
+    '<span>✅ Toutes les erreurs ont été détectées</span>' +
+    '<button class="completion-popup-next" onclick="goNext()">Suivant →</button>';
+  wrap.appendChild(popup);
+
+  const nextBtn = document.getElementById('btnNext');
+  nextBtn.classList.add('show');
+}
+
 function updateSceneScore() {
   const n = SCENES[currentScene].errors.length;
   document.getElementById('sceneScore').textContent = found.size + '/' + n;
   document.getElementById('progFill').style.width = (found.size / n * 100) + '%';
   if (found.size === n) {
-    document.getElementById('btnNext').classList.add('show');
+    clearPopup();
+    showCompletionPopup();
   }
 }
 
-function revealAll() {
+function revealSceneAnswers() {
   const scene = SCENES[currentScene];
   scene.errors.forEach(err => {
     if (!found.has(err.id)) { found.add(err.id); addZone(err); }
   });
   updateSceneScore();
+  if (DEMO_MODE) {
+    document.getElementById('btnNext').classList.add('show');
+  }
 }
 
 function resetScene() {
   found.clear();
   const wrap = document.getElementById('wrap');
-  wrap.querySelectorAll('.found-zone').forEach(z => z.remove());
+  wrap.querySelectorAll('.found-zone,.completion-popup').forEach(z => z.remove());
   document.getElementById('errorLog').innerHTML = '';
   clearPopup();
   const n = SCENES[currentScene].errors.length;
