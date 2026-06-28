@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPP Error Room — Administration</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:#0d1117; font-family:Arial,sans-serif; color:#fff; min-height:100vh; }
+
+/* ── CONFIG ── */
+/* Collez ici la MÊME URL Web App que dans index.html */
+
+/* ── LOGIN ── */
+.login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+.login-card { background:#161b22; border:1px solid #2d3748; border-radius:14px; padding:32px 28px; width:100%; max-width:360px; text-align:center; }
+.login-logo { font-size:36px; margin-bottom:8px; }
+.login-title { font-size:20px; font-weight:700; margin-bottom:4px; }
+.login-sub { font-size:12px; color:#9CA3AF; margin-bottom:24px; }
+.login-input { width:100%; background:#0d1117; border:1px solid #374151; color:#fff; padding:11px 14px; border-radius:8px; font-size:15px; margin-bottom:12px; }
+.login-input:focus { outline:none; border-color:#2E75B6; }
+.login-btn { width:100%; background:linear-gradient(135deg,#1F4E79,#2E75B6); color:#fff; border:none; padding:12px; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; }
+.login-btn:hover { opacity:.9; }
+.login-error { color:#ef4444; font-size:12px; margin-top:10px; display:none; }
+
+/* ── DASHBOARD ── */
+.dash { display:none; padding:0 0 40px; }
+.dash.active { display:block; }
+.dash-header { background:linear-gradient(135deg,#1F4E79,#2E75B6); padding:16px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.dash-title { font-size:18px; font-weight:700; }
+.dash-sub { font-size:12px; opacity:.8; }
+.dash-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.dash-btn { background:rgba(255,255,255,.18); color:#fff; border:none; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+.dash-btn:hover { opacity:.85; }
+
+.stats-row { display:flex; gap:12px; flex-wrap:wrap; padding:18px 24px; }
+.stat-box { background:#161b22; border:1px solid #2d3748; border-radius:10px; padding:14px 20px; min-width:130px; flex:1; }
+.stat-num { font-size:28px; font-weight:700; color:#6DB3F2; }
+.stat-lbl { font-size:11px; color:#9CA3AF; margin-top:2px; }
+
+.filters { padding:0 24px 12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.filters select, .filters input { background:#161b22; border:1px solid #374151; color:#fff; padding:7px 12px; border-radius:8px; font-size:13px; }
+
+.table-wrap { padding:0 24px; overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:12px; min-width:900px; }
+th { background:#1a2332; padding:10px 8px; text-align:left; font-weight:700; color:#6DB3F2; position:sticky; top:0; border-bottom:2px solid #2E75B6; }
+td { padding:9px 8px; border-bottom:1px solid #21262d; vertical-align:top; }
+tr:hover td { background:#161b22; }
+.cell-found { color:#6ee7b7; font-size:11px; }
+.cell-missed { color:#fca5a5; font-size:11px; }
+.cell-score { font-weight:700; color:#fff; white-space:nowrap; }
+.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; }
+.badge-upcc { background:#1F4E79; }
+.badge-pharm { background:#5B0063; }
+.loading { text-align:center; padding:40px; color:#9CA3AF; }
+.empty { text-align:center; padding:40px; color:#6b7280; }
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══════════════════════════════════════════════════════ -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-logo">🔐</div>
+    <div class="login-title">Espace Administration</div>
+    <div class="login-sub">BPP Error Room — accès réservé</div>
+    <input class="login-input" id="pwd" type="password" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')login()">
+    <button class="login-btn" onclick="login()">Accéder</button>
+    <div class="login-error" id="loginError">Mot de passe incorrect.</div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══════════════════════════════════════════════════ -->
+<div class="dash" id="dash">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">📊 Résultats — BPP Error Room</div>
+      <div class="dash-sub" id="dashSub">Chargement…</div>
+    </div>
+    <div class="dash-actions">
+      <button class="dash-btn" onclick="loadData()">↻ Actualiser</button>
+      <button class="dash-btn" onclick="exportCSV()">⬇ Exporter CSV</button>
+    </div>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="filters">
+    <label style="font-size:12px;color:#9CA3AF;">Filtrer :</label>
+    <select id="filterLieu" onchange="renderTable()">
+      <option value="">Tous lieux</option>
+      <option value="UPCC">UPCC</option>
+      <option value="Pharmacie interne">Pharmacie interne</option>
+    </select>
+    <select id="filterFormation" onchange="renderTable()">
+      <option value="">Formation : tous</option>
+      <option value="Oui">A eu formation BPP</option>
+      <option value="Non">Sans formation BPP</option>
+    </select>
+    <input id="filterText" placeholder="Rechercher (initiales, fonction…)" oninput="renderTable()" style="flex:1;min-width:160px;">
+  </div>
+
+  <div class="table-wrap">
+    <div class="loading" id="loadingMsg">Chargement des données…</div>
+    <table id="dataTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Date</th><th>Initiales</th><th>Lieu</th><th>Fonction</th><th>Exp.</th><th>Form. BPP</th><th>Total</th>
+          <th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>Détail trouvées / manquées</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty" id="emptyMsg" style="display:none;">Aucune donnée pour le moment.</div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// ⚙️ CONFIGURATION — collez ici la MÊME URL Web App que dans index.html
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxu6rBinqnkhq9ZIo58iIqsXHpRh_2MQpGYYsE6646_J1K9KCTWULVCWrIq3EONxlvA/exec";
+const ADMIN_PASSWORD = "ISA2026";
+// ════════════════════════════════════════════════════════════════════
+
+let allRows = [];
+
+function login() {
+  const pwd = document.getElementById('pwd').value;
+  if (pwd !== ADMIN_PASSWORD) {
+    document.getElementById('loginError').style.display = 'block';
+    return;
+  }
+  document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('dash').classList.add('active');
+  loadData();
+}
+
+function loadData() {
+  document.getElementById('loadingMsg').style.display = 'block';
+  document.getElementById('dataTable').style.display = 'none';
+  document.getElementById('emptyMsg').style.display = 'none';
+
+  if (!SCRIPT_URL) {
+    document.getElementById('loadingMsg').textContent =
+      "⚠ SCRIPT_URL non configuré. Collez l'URL Web App dans admin.html.";
+    return;
+  }
+
+  fetch(SCRIPT_URL + '?pwd=' + encodeURIComponent(ADMIN_PASSWORD))
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) throw new Error(data.error || 'Erreur');
+      allRows = data.rows || [];
+      document.getElementById('dashSub').textContent =
+        allRows.length + ' session(s) enregistrée(s)';
+      renderStats();
+      renderTable();
+    })
+    .catch(err => {
+      document.getElementById('loadingMsg').textContent = '❌ Erreur : ' + err.message;
+    });
+}
+
+function renderStats() {
+  const n = allRows.length;
+  const upcc = allRows.filter(r => r.Lieu === 'UPCC').length;
+  const formed = allRows.filter(r => r.Formation_BPP === 'Oui').length;
+
+  // Average % score
+  let totPct = 0, cnt = 0;
+  allRows.forEach(r => {
+    const m = String(r.Score_Total).match(/(\d+)\/(\d+)/);
+    if (m) { totPct += (+m[1] / +m[2]) * 100; cnt++; }
+  });
+  const avg = cnt ? Math.round(totPct / cnt) : 0;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-box"><div class="stat-num">${n}</div><div class="stat-lbl">Participants</div></div>
+    <div class="stat-box"><div class="stat-num">${avg}%</div><div class="stat-lbl">Score moyen</div></div>
+    <div class="stat-box"><div class="stat-num">${upcc}</div><div class="stat-lbl">UPCC</div></div>
+    <div class="stat-box"><div class="stat-num">${n - upcc}</div><div class="stat-lbl">Pharmacie interne</div></div>
+    <div class="stat-box"><div class="stat-num">${formed}</div><div class="stat-lbl">Avec formation BPP</div></div>
+  `;
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt)) return String(d).slice(0, 16);
+  return dt.toLocaleDateString('fr-FR') + ' ' + dt.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+}
+
+function renderTable() {
+  const fLieu = document.getElementById('filterLieu').value;
+  const fForm = document.getElementById('filterFormation').value;
+  const fText = document.getElementById('filterText').value.toLowerCase();
+
+  let rows = allRows.filter(r => {
+    if (fLieu && r.Lieu !== fLieu) return false;
+    if (fForm && r.Formation_BPP !== fForm) return false;
+    if (fText) {
+      const blob = (r.Initiales + ' ' + r.Fonction + ' ' + r.Lieu).toLowerCase();
+      if (!blob.includes(fText)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('tableBody');
+  const table = document.getElementById('dataTable');
+  const empty = document.getElementById('emptyMsg');
+  document.getElementById('loadingMsg').style.display = 'none';
+
+  if (rows.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  table.style.display = 'table';
+
+  tbody.innerHTML = rows.map(r => {
+    const lieuBadge = r.Lieu === 'UPCC'
+      ? '<span class="badge badge-upcc">UPCC</span>'
+      : '<span class="badge badge-pharm">Ph. interne</span>';
+
+    function detailBlock(n) {
+      const f = r['S'+n+'_Trouvees'] || '';
+      const m = r['S'+n+'_Manquees'] || '';
+      if (!f && !m) return '';
+      return '<div style="margin-bottom:6px;"><b style="color:#6DB3F2;">Scène '+n+'</b>'
+        + (f && f !== '—' ? '<div class="cell-found">✓ '+f+'</div>' : '')
+        + (m && m !== '—' ? '<div class="cell-missed">✗ '+m+'</div>' : '')
+        + '</div>';
+    }
+
+    return `<tr>
+      <td>${fmtDate(r.Horodatage)}</td>
+      <td><b>${r.Initiales||''}</b></td>
+      <td>${lieuBadge}</td>
+      <td>${r.Fonction||''}</td>
+      <td>${r.Experience||''}</td>
+      <td>${r.Formation_BPP||''}</td>
+      <td class="cell-score">${r.Score_Total||''}</td>
+      <td>${r.S1_Score||''}</td>
+      <td>${r.S2_Score||''}</td>
+      <td>${r.S3_Score||''}</td>
+      <td>${r.S4_Score||''}</td>
+      <td>${detailBlock(1)+detailBlock(2)+detailBlock(3)+detailBlock(4)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportCSV() {
+  if (allRows.length === 0) { alert('Aucune donnée à exporter.'); return; }
+  const headers = Object.keys(allRows[0]);
+  const lines = [headers.join(';')];
+  allRows.forEach(r => {
+    lines.push(headers.map(h => '"' + String(r[h]||'').replace(/"/g,'""') + '"').join(';'));
+  });
+  const blob = new Blob(['\ufeff' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'BPP_resultats_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
