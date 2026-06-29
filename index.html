@@ -144,7 +144,7 @@ body { background:#0d1117; font-family:Arial,sans-serif; color:#fff; }
   box-shadow:0 8px 40px rgba(0,0,0,.5); flex-shrink:0;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
-.wrap img { width:100%; height:auto; display:block; user-select:none; pointer-events:none; }
+.wrap img { width:100%; height:auto; max-height:65vh; object-fit:contain; display:block; margin:0 auto; user-select:none; pointer-events:none; }
 
 .found-zone {
   position:absolute; border-radius:50%;
@@ -336,7 +336,7 @@ body { background:#0d1117; font-family:Arial,sans-serif; color:#fff; }
     <div class="welcome-title">Comment jouer</div>
     <div class="explain-box">
       <p><b>Principe :</b> chaque scène montre une situation de préparation en UPCC. Cliquez directement sur l'image partout où vous identifiez une non-conformité BPP.</p>
-      <p><b>Minuteur :</b> vous avez <b>10 secondes par erreur</b>. Une scène avec 7 erreurs dure donc 70 secondes, puis la scène suivante démarre automatiquement.</p>
+      <p><b>Minuteur :</b> vous avez <b>5 secondes par erreur</b>. Une scène avec 7 erreurs dure donc 35 secondes, puis la scène suivante démarre automatiquement.</p>
       <p><b>Feedback :</b> chaque clic correct affiche l'explication BPP associée, qui reste visible dans le journal en bas d'écran.</p>
       <p><b>Vidéos :</b> à la fin de chaque scène, une vidéo de formation BPP en lien avec la thématique vous sera proposée.</p>
       <p><b>Débriefing :</b> les corrections détaillées seront discutées collectivement après le jeu.</p>
@@ -472,11 +472,11 @@ const SCENES = [
     label:"Champ de travail non organisé",
     desc:"Le plan de travail sous hotte doit être organisé : seul le matériel nécessaire à la préparation en cours doit être présent. Un champ encombré augmente le risque de confusion de produits, de contamination croisée et d'obstruction du flux laminaire.",
     ref:"BPP LD1 — Organisation de la zone de travail / BPP LD2 §7.2" },
-  { id:4, cx:73, cy:65, r:11,
+  { id:4, cx:70, cy:62, r:12,
     label:"Aiguilles en conditionnement secondaire",
     desc:"L'emballage secondaire (suremballage) des aiguilles doit être retiré dans le SAS d'entrée avant introduction en zone propre. Seul l'emballage primaire stérile peut pénétrer en classe A/B. La présence de l'emballage secondaire introduit des particules et compromet la stérilité.",
     ref:"BPP LD1 — Procédure de transfert en zone propre / ISO 14644-1" },
-  { id:5, cx:18, cy:67, r:11,
+  { id:5, cx:24, cy:70, r:12,
     label:"Compresse stérile hors champ stérile",
     desc:"La compresse stérile utilisée pour la désinfection des bouchons doit être posée sur le champ stérile, pas directement sur le plan de travail inox. Hors du champ stérile, la compresse est considérée contaminée et ne peut plus être utilisée de façon aseptique.",
     ref:"BPP LD1 — Technique aseptique, maintien du champ stérile" },
@@ -491,8 +491,12 @@ const SCENES = [
     sub: "Identifiez les erreurs de manipulation",
     color: "#5B0063",
     icon: "💉",
-    img: "Design%20sans%20titre%20(5).png",
-    errors: [{ id:1, cx:33, cy:22, r:18,
+    steps: [
+      {
+        title: "Scène 3 — Technique opératoire",
+        sub: "Identifiez les erreurs de manipulation",
+        img: "Design%20sans%20titre%20(5).png",
+        errors: [{ id:1, cx:33, cy:22, r:18,
     label:"Positionnement vertical de la poche",
     desc:"La poche doit être posée à plat et horizontalement sur le plan de travail lors de l'injection du médicament. Un positionnement vertical crée une surpression dans la poche, empêche un mélange homogène et augmente le risque de projection ou de fuite.",
     ref:"BPP LD1 — Technique opératoire de préparation des poches / SFPC" },
@@ -504,6 +508,56 @@ const SCENES = [
     label:"Bulles d'air dans la seringue",
     desc:"Des bulles d'air visibles dans le corps de la seringue indiquent une préparation non conforme. L'injection de bulles d'air dans une poche IV est dangereuse pour le patient et signe un contrôle qualité insuffisant avant injection.",
     ref:"BPP LD1 — Contrôle visuel avant injection / SFPC Référentiel préparation stérile" }]
+      },
+      {
+        title: "Scène 3 — Technique opératoire",
+        sub: "Identifiez les erreurs de manipulation",
+        img: "scene3-etape2.jpeg",
+        errors: [{ id:1, cx:28, cy:24, r:14,
+    label:"Collecteur DASRI posé sur le champ stérile",
+    desc:"Le collecteur DASRI (jaune/orange) est posé directement sur le champ stérile, au même titre que le matériel de préparation. Un contenant à déchets est potentiellement contaminé : sa présence sur le champ stérile crée un risque de contamination croisée et de confusion avec les produits. Les contenants à déchets doivent être placés hors du champ stérile, distincts de la zone de préparation.",
+    ref:"BPP (ANSM, éd. 2022) — Chap. 3, §3.22" },
+  { id:2, cx:46, cy:26, r:11,
+    label:"Bouteille de récupération du solvant sur le champ stérile",
+    desc:"La bouteille de récupération du solvant est un contenant de rejet posé directement sur le champ stérile, parmi les flacons, seringues et compresses. Cette disposition augmente le risque de confusion entre produits et de contamination croisée. Le matériel doit être disposé de manière à séparer clairement la zone de préparation des contenants de récupération/déchets.",
+    ref:"BPP (ANSM, éd. 2022) — Chap. 3, §3.22" }]
+      },
+      {
+        title: "Scène 3 — Technique opératoire",
+        sub: "Identifiez les erreurs de manipulation",
+        img: "scene3step3.jpeg",
+        errors: [{ id:1, cx:47, cy:83, r:18,
+    label:"Champ stérile recouvrant la bouche de reprise d'air",
+    desc:"Le champ stérile déployé sur le plan de travail recouvre partiellement la bouche de reprise d'air de l'isolateur, modifiant le schéma aéraulique de la zone et créant un risque de perturbation du flux d'air protecteur.",
+    ref:"BPP (ANSM, éd. 2022), LD1 — Locaux et équipements, point 53 : le schéma aéraulique ne doit présenter aucun risque de contamination, et les bouches de soufflage et de reprise d'air doivent être positionnées de manière adaptée pour éviter que la circulation de l'air n'entraîne des particules vers une zone à risque." }]
+      },
+      {
+        title: "Scène 3 — Technique opératoire",
+        sub: "Identifiez les erreurs de manipulation",
+        img: "scene3step4.jpeg",
+        errors: [{ id:1, cx:55, cy:14, r:10,
+    label:"Compresse mal positionnée sur le flacon",
+    desc:"La compresse stérile entoure le corps du flacon (bouchon, étiquette) au lieu d'envelopper le point de ponction aiguille-septum, qui est le seul endroit où une protection contre la projection a un sens.",
+    ref:"HUG 2017 — L'opérateur utilise des techniques appropriées prévenant le risque de contamination chimique : possibilité d'utilisation de compresses stériles pour l'ouverture d'une ampoule ou au point de prélèvement et d'injection d'un flacon." },
+  { id:2, cx:32, cy:83, r:9,
+    label:"Absence de compresse au point de connexion sur la poche",
+    desc:"Lors de la connexion de l'aiguille au dispositif de transfert relié à la poche de perfusion, aucune compresse stérile n'est utilisée pour contenir un éventuel risque de projection au point de jonction.",
+    ref:"HUG 2017 — L'opérateur utilise des techniques appropriées prévenant le risque de contamination chimique : possibilité d'utilisation de compresses stériles pour l'ouverture d'une ampoule ou au point de prélèvement et d'injection d'un flacon." },
+  { id:3, cx:75, cy:68, r:10,
+    label:"Absence de compresse au point de ponction du flacon",
+    desc:"Lors du prélèvement à l'aiguille dans le flacon, aucune compresse stérile n'entoure la jonction aiguille-septum.",
+    ref:"HUG 2017 — L'opérateur utilise des techniques appropriées prévenant le risque de contamination chimique : possibilité d'utilisation de compresses stériles pour l'ouverture d'une ampoule ou au point de prélèvement et d'injection d'un flacon." }]
+      },
+      {
+        title: "Scène 3 — Technique opératoire",
+        sub: "Identifiez les erreurs de manipulation",
+        img: "scene3step5.jpeg",
+        errors: [{ id:1, cx:37, cy:74, r:13,
+    label:"Transfert manuel du matériel dans le SAS",
+    desc:"Le matériel stérile (seringue) est déposé à l'aide de la main dans le SAS, sans respect de la procédure de transfert garantissant la maîtrise du risque de contamination.",
+    ref:"BPP (2023) — Les transferts de matériels et de produits entre deux zones de classes différentes doivent être réalisés selon une procédure validée permettant de maintenir le niveau de propreté requis et de limiter les contaminations." }]
+      }
+    ]
   },
   {
     id: 4,
@@ -580,15 +634,32 @@ function submitIdentification() {
 
 // ── STATE ─────────────────────────────────────────────────────────────
 let currentScene = 0;
+let currentStep = 0;
+let stepRecorded = false;
 let found = new Set();
 let sceneScores = []; // {found, total, title, color, foundLabels, missedLabels}
 let timerInterval = null;
 let timeLeft = 0;
 let revealTimer = null;
 let popupTimer = null;
+let clickFrozen = false;
+let clickFreezeTimer = null;
 const HIT_TOLERANCE = 1.08; // marge de tolérance pour clics mobiles (user-friendly)
-const SECONDS_PER_ERROR = 10;
+const CLICK_FREEZE_MS = 1000; // bloque le clic à l'entrée d'une scène/étape pour éviter le double-clic qui saute une étape
+const SECONDS_PER_ERROR = 5;
 const DEMO_MODE = new URLSearchParams(window.location.search).get('demo') === '1';
+
+// ── STEP HELPERS ──────────────────────────────────────────────────────
+// A scene may hold several "steps" (each with its own image + errors).
+// Scenes without a `steps` array behave as a single implicit step.
+function sceneSteps(idx) {
+  const s = SCENES[idx];
+  return s.steps || [{ img: s.img, errors: s.errors, title: s.title, sub: s.sub }];
+}
+function activeStep() { return sceneSteps(currentScene)[currentStep]; }
+function sceneErrorCount(s) {
+  return (s.steps || [{ errors: s.errors }]).reduce((a, st) => a + st.errors.length, 0);
+}
 
 // ── WELCOME ───────────────────────────────────────────────────────────
 (function initWelcome() {
@@ -599,7 +670,7 @@ const DEMO_MODE = new URLSearchParams(window.location.search).get('demo') === '1
     c.style.borderColor = s.color + '60';
     c.innerHTML = `<div class="card-icon">${s.icon}</div>
       <div class="card-title">${s.title}</div>
-      <div class="card-sub">${s.errors.length} écarts à identifier</div>`;
+      <div class="card-sub">${sceneErrorCount(s)} écarts à identifier</div>`;
     grid.appendChild(c);
   });
 })();
@@ -614,8 +685,7 @@ function startGame() {
 // ── TIMER ─────────────────────────────────────────────────────────────
 function startTimer() {
   clearInterval(timerInterval);
-  const scene = SCENES[currentScene];
-  timeLeft = scene.errors.length * SECONDS_PER_ERROR;
+  timeLeft = activeStep().errors.length * SECONDS_PER_ERROR;
   updateTimerDisplay();
   timerInterval = setInterval(() => {
     timeLeft--;
@@ -641,13 +711,26 @@ function updateTimerDisplay() {
 }
 
 // ── SCENE LOADER ──────────────────────────────────────────────────────
+// Enter a scene at its first step.
 function loadScene(idx) {
+  currentScene = idx;
+  currentStep = 0;
+  loadStep();
+}
+
+// Render the current scene's current step (image + errors).
+function loadStep() {
   found.clear();
-  const s = SCENES[idx];
-  document.getElementById('gameTitle').textContent = s.title;
-  document.getElementById('gameSub').textContent   = s.sub;
+  stepRecorded = false;
+  clickFrozen = true;
+  clearTimeout(clickFreezeTimer);
+  clickFreezeTimer = setTimeout(() => { clickFrozen = false; }, CLICK_FREEZE_MS);
+  const s = SCENES[currentScene];
+  const step = activeStep();
+  document.getElementById('gameTitle').textContent = step.title || s.title;
+  document.getElementById('gameSub').textContent   = step.sub   || s.sub;
   document.getElementById('gameHeader').style.background = `linear-gradient(135deg,${s.color},${s.color}cc)`;
-  document.getElementById('sceneScore').textContent = '0/' + s.errors.length;
+  document.getElementById('sceneScore').textContent = '0/' + step.errors.length;
   document.getElementById('progFill').style.width = '0%';
   document.getElementById('btnNext').classList.remove('show');
 
@@ -655,8 +738,8 @@ function loadScene(idx) {
   steps.innerHTML = '';
   SCENES.forEach((sc, i) => {
     const d = document.createElement('div');
-    d.className = 'step' + (i < idx ? ' done' : i === idx ? ' active' : '');
-    d.textContent = i < idx ? '✓' : (i + 1);
+    d.className = 'step' + (i < currentScene ? ' done' : i === currentScene ? ' active' : '');
+    d.textContent = i < currentScene ? '✓' : (i + 1);
     steps.appendChild(d);
   });
 
@@ -665,7 +748,7 @@ function loadScene(idx) {
   document.getElementById('errorLog').innerHTML = '';
 
   const img = document.getElementById('sceneImg');
-  img.src = s.img;
+  img.src = step.img;
   img.onload = () => {
     wrap.onclick = handleClick;
     if (DEMO_MODE) revealSceneAnswers();
@@ -680,7 +763,8 @@ function loadScene(idx) {
 
 // ── CLICK HANDLER ─────────────────────────────────────────────────────
 function handleClick(e) {
-  const scene = SCENES[currentScene];
+  if (clickFrozen) return;
+  const scene = activeStep();
   const img  = document.getElementById('sceneImg');
   const wrap = document.getElementById('wrap');
   const r  = img.getBoundingClientRect();
@@ -791,17 +875,20 @@ function showCompletionPopup() {
   const wrap = document.getElementById('wrap');
   const popup = document.createElement('div');
   popup.className = 'completion-popup';
-  popup.innerHTML =
-    '<span>✅ Toutes les erreurs ont été détectées</span>' +
-    '<button class="completion-popup-next" onclick="goNext()">Suivant →</button>';
+  const isLastSceneStep = currentScene === SCENES.length - 1 && currentStep === sceneSteps(currentScene).length - 1;
+  popup.innerHTML = isLastSceneStep
+    ? '<span>🎉 Félicitations ! Vous avez terminé le jeu</span>' +
+      '<button class="completion-popup-next" onclick="showFinal()">Voir les résultats</button>'
+    : '<span>✅ Toutes les erreurs ont été détectées</span>' +
+      '<button class="completion-popup-next" onclick="goNext()">Suivant →</button>';
   wrap.appendChild(popup);
 
   const nextBtn = document.getElementById('btnNext');
-  nextBtn.classList.add('show');
+  nextBtn.classList.toggle('show', !isLastSceneStep);
 }
 
 function updateSceneScore() {
-  const n = SCENES[currentScene].errors.length;
+  const n = activeStep().errors.length;
   document.getElementById('sceneScore').textContent = found.size + '/' + n;
   document.getElementById('progFill').style.width = (found.size / n * 100) + '%';
   if (found.size === n) {
@@ -811,7 +898,7 @@ function updateSceneScore() {
 }
 
 function revealSceneAnswers() {
-  const scene = SCENES[currentScene];
+  const scene = activeStep();
   scene.errors.forEach(err => {
     if (!found.has(err.id)) { found.add(err.id); addZone(err); }
   });
@@ -827,7 +914,7 @@ function resetScene() {
   wrap.querySelectorAll('.found-zone,.completion-popup').forEach(z => z.remove());
   document.getElementById('errorLog').innerHTML = '';
   clearPopup();
-  const n = SCENES[currentScene].errors.length;
+  const n = activeStep().errors.length;
   document.getElementById('sceneScore').textContent = '0/' + n;
   document.getElementById('progFill').style.width = '0%';
   document.getElementById('btnNext').classList.remove('show');
@@ -836,19 +923,35 @@ function resetScene() {
 // ── NAVIGATION ────────────────────────────────────────────────────────
 function recordSceneScore() {
   const scene = SCENES[currentScene];
+  const step  = activeStep();
   sceneScores.push({
-    title: scene.title,
+    title: step.title || scene.title,
     color: scene.color,
     found: found.size,
-    total: scene.errors.length,
-    foundLabels: scene.errors.filter(e => found.has(e.id)).map(e => e.label),
-    missedLabels: scene.errors.filter(e => !found.has(e.id)).map(e => e.label)
+    total: step.errors.length,
+    foundLabels: step.errors.filter(e => found.has(e.id)).map(e => e.label),
+    missedLabels: step.errors.filter(e => !found.has(e.id)).map(e => e.label)
   });
+  stepRecorded = true;
 }
 
 function goNext() {
   stopTimer();
   recordSceneScore();
+
+  const isLastSceneStep = currentScene === SCENES.length - 1 && currentStep === sceneSteps(currentScene).length - 1;
+  if (isLastSceneStep) {
+    showFinal();
+    return;
+  }
+
+  if (currentStep < sceneSteps(currentScene).length - 1) {
+    currentStep++;
+    showScreen('game');
+    loadStep();
+    return;
+  }
+
   showScoreReveal();
 }
 
@@ -863,6 +966,13 @@ function showScoreReveal() {
 
 function proceedAfterReveal() {
   clearTimeout(revealTimer);
+  // Advance to the next step within the same scene before leaving it.
+  if (currentStep < sceneSteps(currentScene).length - 1) {
+    currentStep++;
+    showScreen('game');
+    loadStep();
+    return;
+  }
   const qrIdx = QR_MAP[currentScene];
   if (qrIdx !== null && qrIdx !== undefined) {
     showQR(qrIdx);
@@ -950,7 +1060,7 @@ let lastResultsText = "";
 
 function showFinal() {
   stopTimer();
-  if (sceneScores.length === currentScene) {
+  if (!stepRecorded) {
     recordSceneScore();
   }
 
